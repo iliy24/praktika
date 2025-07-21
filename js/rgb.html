@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Динамический квадрат</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .controls {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+        }
+        .control-group {
+            margin-bottom: 10px;
+        }
+        label {
+            display: inline-block;
+            width: 150px;
+            text-align: right;
+            margin-right: 10px;
+        }
+        input {
+            padding: 8px;
+            width: 80px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .square {
+            margin: 20px auto;
+            border: 2px solid #333;
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Динамический квадрат</h1>
+    
+    <div class="controls">
+        <div class="control-group">
+            <label for="width">Ширина (px):</label>
+            <input type="number" id="width" min="10" max="500" value="100">
+        </div>
+        
+        <div class="control-group">
+            <label for="height">Высота (px):</label>
+            <input type="number" id="height" min="10" max="500" value="100">
+        </div>
+        
+        <button id="randomColor">Случайный цвет</button>
+    </div>
+    
+    <div class="square" id="square" style="width: 100px; height: 100px;"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const widthInput = document.getElementById('width');
+            const heightInput = document.getElementById('height');
+            const randomColorBtn = document.getElementById('randomColor');
+            const square = document.getElementById('square');
+            
+               function updateSquare() {
+                const width = widthInput.value + 'px';
+                const height = heightInput.value + 'px';
+                
+                square.style.width = width;
+                square.style.height = height;
+            }
+            
+            function getRandomColor() {
+                const letters = '0123456789ABCDEF';
+                let color = '#';
+                for (let i = 0; i < 6; i++) {
+                    color += letters[Math.floor(Math.random() * 16)];
+                }
+                return color;
+            }
+            
+            widthInput.addEventListener('input', updateSquare);
+            heightInput.addEventListener('input', updateSquare);
+            
+            randomColorBtn.addEventListener('click', function() {
+                square.style.backgroundColor = getRandomColor();
+            });
+            
+            updateSquare();
+        });
+    </script>
+</body>
+</html>

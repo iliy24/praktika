@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Оформление заказа</title>
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=15fa913a-35a1-4177-b043-308163e7f4aa&lang=ru_RU" type="text/javascript"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .order-form {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="tel"],
+        input[type="email"],
+        textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        .char-counter {
+            font-size: 12px;
+            color: #666;
+            text-align: right;
+        }
+        #map {
+            width: 100%;
+            height: 300px;
+            margin: 15px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            display: block;
+            margin: 20px auto 0;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .error {
+            color: red;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .success {
+            color: green;
+            font-size: 16px;
+            text-align: center;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        .required:after {
+            content: " *";
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Order</h1>
+    <div class="order-form">
+        <form id="orderForm">
+            <div class="form-group">
+                <label for="fullName" class="required">ФИО</label>
+                <input type="text" id="fullName" name="fullName" required>
+                <div id="fullNameError" class="error"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="phone" class="required">Телефон</label>
+                <input type="tel" id="phone" name="phone" required>
+                <div id="phoneError" class="error"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email">
+                <div id="emailError" class="error"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="required">Адрес доставки</label>
+                <div id="map"></div>
+                <div id="addressError" class="error"></div>
+                <div id="coordinates"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="comment">Комментарий к заказу</label>
+                <textarea id="comment" name="comment" maxlength="500"></textarea>
+                <div class="char-counter"><span id="charCount">0</span>/500 символов</div>
+                <div id="commentError" class="error"></div>
+            </div>
+
+            <button type="submit">Отправить</button>
+            <div id="resultMessage"></div>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Инициализация карты
+            let map, placemark;
+            let selectedCoordinates = null;
+            
+            ymaps.ready(initMap);
+            
+            function initMap() {
+                map = new ymaps.Map("map", {
+                    center: [55.76, 37.64], // Москва
+                    zoom: 10
+                });
+                
+                // Обработчик клика по карте
+                map.events.add('click', function(e) {
+                    const coords = e.get('coords');
+                    selectedCoordinates = coords;
+                    
+                    // Удаляем предыдущую метку, если есть
+                    if (placemark) {
+                        map.geoObjects.remove(placemark);
+                    }
+                    
+                    // Создаем новую метку
+                    placemark = new ymaps.Placemark(coords, {}, {
+                        preset: 'islands#redDotIcon'
+                    });
+                    
+                    map.geoObjects.add(placemark);
+                    
+                    // Определяем адрес по координатам
+                    ymaps.geocode(coords).then(function(res) {
+                        const firstGeoObject = res.geoObjects.get(0);
+                        if (firstGeoObject) {
+                            // Можно вывести адрес в coordinates, если нужно
+                            document.getElementById('coordinates').textContent = 
+                                `Адрес: ${firstGeoObject.getAddressLine()}\nКоординаты: ${coords[0].toFixed(6)}, ${coords[1].toFixed(6)}`;
+                        }
+                    });
+                });
+            }
+            
+            // Счетчик символов для комментария
+            const comment = document.getElementById('comment');
+            const charCount = document.getElementById('charCount');
+            
+            comment.addEventListener('input', function() {
+                charCount.textContent = this.value.length;
+            });
+            
+            // Валидация телефона - только цифры
+            const phoneInput = document.getElementById('phone');
+            phoneInput.addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+            
+            // Обработка отправки формы
+            const orderForm = document.getElementById('orderForm');
+            const resultMessage = document.getElementById('resultMessage');
+            
+            orderForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                let isValid = true;
+                const errors = [];
+                
+                // Проверка ФИО
+                const fullName = document.getElementById('fullName').value.trim();
+                if (!fullName) {
+                    document.getElementById('fullNameError').textContent = 'Не заполнено поле ФИО';
+                    isValid = false;
+                    errors.push('Не заполнено поле ФИО');
+                } else {
+                    document.getElementById('fullNameError').textContent = '';
+                }
+                
+                // Проверка телефона
+                const phone = document.getElementById('phone').value.trim();
+                if (!phone) {
+                    document.getElementById('phoneError').textContent = 'Не заполнено поле Телефон';
+                    isValid = false;
+                    errors.push('Не заполнено поле Телефон');
+                } else if (!/^\d+$/.test(phone)) {
+                    document.getElementById('phoneError').textContent = 'Телефон должен содержать только цифры';
+                    isValid = false;
+                    errors.push('Телефон должен содержать только цифры');
+                } else {
+                    document.getElementById('phoneError').textContent = '';
+                }
+                
+                // Проверка email (не обязательное поле, но если заполнено - проверяем)
+                const email = document.getElementById('email').value.trim();
+                if (email && !email.includes('@')) {
+                    document.getElementById('emailError').textContent = 'Email должен содержать символ @';
+                    isValid = false;
+                    errors.push('Email должен содержать символ @');
+                } else {
+                    document.getElementById('emailError').textContent = '';
+                }
+                
+                // Проверка адреса доставки
+                if (!selectedCoordinates) {
+                    document.getElementById('addressError').textContent = 'Не отмечен адрес доставки';
+                    isValid = false;
+                    errors.push('Не отмечен адрес доставки');
+                } else {
+                    document.getElementById('addressError').textContent = '';
+                }
+                
+                // Проверка комментария (не обязательное поле, но если заполнено - проверяем длину)
+                const commentText = document.getElementById('comment').value.trim();
+                if (commentText.length > 500) {
+                    document.getElementById('commentError').textContent = 'Комментарий не должен превышать 500 символов';
+                    isValid = false;
+                    errors.push('Комментарий не должен превышать 500 символов');
+                } else {
+                    document.getElementById('commentError').textContent = '';
+                }
+                
+                // Вывод результата
+                resultMessage.className = isValid ? 'success' : 'error';
+                resultMessage.textContent = isValid ? 'Заказ оформлен!' : errors.join(', ');
+                
+                if (isValid) {
+                    // Можно отправить данные на сервер
+                    console.log('Форма валидна, отправляем данные:', {
+                        fullName,
+                        phone,
+                        email,
+                        coordinates: selectedCoordinates,
+                        comment: commentText
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

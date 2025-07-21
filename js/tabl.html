@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Таблица товаров</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .filters {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        label {
+            font-weight: bold;
+        }
+        input[type="number"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100px;
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .no-data {
+            text-align: center;
+            padding: 20px;
+            font-size: 18px;
+            color: #666;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .error {
+            color: red;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Таблица товаров</h1>
+    
+    <div class="filters">
+        <div class="filter-group">
+            <label for="minPrice">Цена от:</label>
+            <input type="number" id="minPrice" min="0" value="0">
+        </div>
+        
+        <div class="filter-group">
+            <label for="maxPrice">Цена до:</label>
+            <input type="number" id="maxPrice" min="0" value="0">
+        </div>
+        
+        <button id="applyFilter">Обновить</button>
+    </div>
+    
+    <div id="priceError" class="error"></div>
+    
+    <div id="tableContainer">
+        <!-- Таблица будет отображаться здесь -->
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const minPriceInput = document.getElementById('minPrice');
+            const maxPriceInput = document.getElementById('maxPrice');
+            const applyFilterBtn = document.getElementById('applyFilter');
+            const tableContainer = document.getElementById('tableContainer');
+            const priceError = document.getElementById('priceError');
+            
+            // Данные товаров
+            const productsData = [
+                { "price": 15619, "quantity": 6, "name": "Бумага для принтера" },
+                { "price": 9979, "quantity": 3, "name": "Шкаф книжный" },
+                { "price": 12582, "quantity": 5, "name": "Маркеры офисные" },
+                { "price": 15185, "quantity": 6, "name": "Канцелярский набор" },
+                { "price": 16053, "quantity": 6, "name": "Вода бутилированная" },
+                { "price": 9979, "quantity": 3, "name": "Стул офисный" },
+                { "price": 9979, "quantity": 3, "name": "Телевизор ЖК" },
+                { "price": 13450, "quantity": 5, "name": "Бумага туалетная" },
+                { "price": 13450, "quantity": 5, "name": "Лазерный принтер" },
+                { "price": 14317, "quantity": 5, "name": "Стол компьютерный" },
+                { "price": 15185, "quantity": 6, "name": "Дверь межкомнатная" },
+                { "price": 16921, "quantity": 6, "name": "Чайник электрический" },
+                { "price": 8677, "quantity": 3, "name": "Светильник" }
+            ];
+            
+            // Инициализация таблицы
+            renderTable(productsData);
+            
+            // Рендеринг таблицы
+            function renderTable(data) {
+                if (data.length === 0) {
+                    tableContainer.innerHTML = '<div class="no-data">Нет данных, попадающих под условие фильтра</div>';
+                    return;
+                }
+                
+                let tableHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>№</th>
+                                <th>Наименование</th>
+                                <th>Количество</th>
+                                <th>Цена за единицу</th>
+                                <th>Сумма</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                data.forEach((product, index) => {
+                    const sum = product.price * product.quantity;
+                    tableHTML += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${product.name}</td>
+                            <td>${product.quantity}</td>
+                            <td>${product.price.toLocaleString()} ₽</td>
+                            <td>${sum.toLocaleString()} ₽</td>
+                        </tr>
+                    `;
+                });
+                
+                tableHTML += `
+                        </tbody>
+                    </table>
+                `;
+                
+                tableContainer.innerHTML = tableHTML;
+            }
+            
+            // Фильтрация данных
+            function filterData() {
+                const minPrice = parseInt(minPriceInput.value) || 0;
+                const maxPrice = parseInt(maxPriceInput.value) || 0;
+                
+                // Валидация ввода
+                if (minPrice < 0 || maxPrice < 0) {
+                    priceError.textContent = 'Цена не может быть отрицательной';
+                    return;
+                }
+                
+                if (maxPrice > 0 && minPrice > maxPrice) {
+                    priceError.textContent = 'Минимальная цена не может быть больше максимальной';
+                    return;
+                }
+                
+                priceError.textContent = '';
+                
+                // Если оба поля 0 - показываем все данные
+                if (minPrice === 0 && maxPrice === 0) {
+                    renderTable(productsData);
+                    return;
+                }
+                
+                // Фильтрация данных
+                const filteredData = productsData.filter(product => {
+                    if (minPrice > 0 && maxPrice > 0) {
+                        return product.price >= minPrice && product.price <= maxPrice;
+                    } else if (minPrice > 0) {
+                        return product.price >= minPrice;
+                    } else {
+                        return product.price <= maxPrice;
+                    }
+                });
+                
+                renderTable(filteredData);
+            }
+            
+            // Обработчик события для кнопки
+            applyFilterBtn.addEventListener('click', filterData);
+            
+            // Первоначальная загрузка данных
+            filterData();
+        });
+    </script>
+</body>
+</html>
