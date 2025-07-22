@@ -220,7 +220,7 @@
                     document.getElementById('phoneError').textContent = '';
                 }
                 
-                // Проверка email (не обязательное поле, но если заполнено - проверяем)
+                // Проверка email (не обязательное поле)
                 const email = document.getElementById('email').value.trim();
                 if (email && !email.includes('@')) {
                     document.getElementById('emailError').textContent = 'Email должен содержать символ @';
@@ -239,7 +239,7 @@
                     document.getElementById('addressError').textContent = '';
                 }
                 
-                // Проверка комментария (не обязательное поле, но если заполнено - проверяем длину)
+                // Проверка комментария (не обязательное поле)
                 const commentText = document.getElementById('comment').value.trim();
                 if (commentText.length > 500) {
                     document.getElementById('commentError').textContent = 'Комментарий не должен превышать 500 символов';

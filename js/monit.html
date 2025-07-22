@@ -143,7 +143,7 @@
   </div>
 
   <script>
-    // Инициализация графика (из первого кода)
+    // Инициализация графика
     const ctx = document.getElementById('chart').getContext('2d');
     const chart = new Chart(ctx, {
       type: 'line',
@@ -201,7 +201,7 @@
       }
     });
 
-    // Глобальные переменные (из первого кода)
+    // Глобальные переменные
     const outputDiv = document.getElementById("output");
     const MAX_POINTS = 20;
     let data = [];
@@ -210,8 +210,7 @@
     let successCount = 0;
     let errorCount = 0;
     let lastValidValue = 0;
-
-    // Функционал из второго кода
+    // Основная работа 
     async function fetchData() {
       try {
         const response = await fetch("https://api.cors.lol/?url=http://cli:12344321@exercise.develop.maximaster.ru/service/cpu/");
@@ -228,7 +227,7 @@
         if (numbers) {
           const val = parseInt(numbers[0]);
           
-          // Всегда добавляем данные на график (даже 0%)
+          // Данные на график
           data.push(val);
           timestamps.push(timeString);
           
@@ -241,7 +240,7 @@
           // Проверяем валидность
           if (val >= 0 && val <= 100 && val !== 401) {
             if (val === 0) {
-              // 0% считаем ошибкой
+              // 0% - ошибка
               errorCount++;
               document.getElementById("errorCount").textContent = errorCount;
               outputDiv.textContent = "Загрузка CPU: 0% (ошибка)";
@@ -286,14 +285,14 @@
       }
     }
 
-    // Функция обновления графика (из первого кода)
+    // Функция обновления графика
     function updateChart() {
       chart.data.labels = timestamps;
       chart.data.datasets[0].data = data;
       chart.update();
     }
 
-    // Обработчики кнопок (из первого кода, но с функционалом из второго)
+    // Обработчики кнопок 
     document.getElementById("startBtn").addEventListener("click", () => {
       if (!intervalId) {
         fetchData();
